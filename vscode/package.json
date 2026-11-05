@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "rotkin",
   "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/gokila16/rotkin" },
   "engines": { "vscode": "^1.82.0" },
   "categories": ["Other"],
   "main": "./extension.js",
