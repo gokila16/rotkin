@@ -1,5 +1,7 @@
 # 🎃 Rotkin
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/gokila16.rotkin?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=gokila16.rotkin)
+
 **A pumpkin that rots while you vibecode with Claude Code, and heals when you take breaks and think for yourself.**
 
 We all know the loop. Claude writes 400 lines, something breaks, you type "fix it". Then "still broken". Then "pls". Two hours later you haven't stood up, and you couldn't explain what your own code does.
@@ -18,7 +20,7 @@ python3 server.py     # then open http://localhost:8765
 
 `python3 uninstall.py` removes only Rotkin's entries.
 
-Prefer VS Code? The extension in `vscode/` puts the pumpkin in your sidebar and starts the server for you.
+Prefer VS Code? [Install Rotkin from the Marketplace](https://marketplace.visualstudio.com/items?itemName=gokila16.rotkin) (or run `code --install-extension gokila16.rotkin`). It puts the pumpkin in your sidebar and starts the server for you.
 
 ## How it rots
 
