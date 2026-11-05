@@ -1,0 +1,26 @@
+{
+  "name": "rotkin",
+  "displayName": "Rotkin",
+  "description": "A pumpkin in your sidebar that rots while you vibecode.",
+  "version": "0.1.0",
+  "publisher": "rotkin",
+  "license": "MIT",
+  "engines": { "vscode": "^1.82.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "scripts": {
+    "bundle": "node bundle.js",
+    "vscode:prepublish": "node bundle.js"
+  },
+  "contributes": {
+    "views": {
+      "explorer": [{ "type": "webview", "id": "rotkin.pumpkin", "name": "Rotkin" }]
+    },
+    "commands": [
+      { "command": "rotkin.openDashboard", "title": "Rotkin: Open Dashboard" },
+      { "command": "rotkin.connect", "title": "Rotkin: Connect to Claude Code" },
+      { "command": "rotkin.disconnect", "title": "Rotkin: Disconnect from Claude Code" }
+    ]
+  }
+}

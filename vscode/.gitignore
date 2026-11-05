@@ -1,0 +1,4 @@
+python/
+LICENSE
+*.vsix
+__pycache__/

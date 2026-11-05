@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotkin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f2b544; --bg-dot: #e3a033; --paper: #fffaef; --paper-2: #f6ecd6; --ink: #2b1d14; --muted: #6f5a47;
+  --accent: #e8631a; --green: #4f7d2a; --danger: #c4372a; --rule: #a9cbe8; --margin: #ec7a6a;
+  --on-bg: #2b1d14; --on-sky: #2b1d14; --shadow: #2b1d14;
+  --sky-1: #ffd98e; --sky-2: #ff9c6b; --sun: #fff3c4; --stars: 0; --hill-back: #a7b552; --hill: #789637;
+  --note-1: #ffe57a; --note-2: #ffb9a3; --note-3: #cfe6a8; --note-4: #e3cdf5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #211830; --bg-dot: #2e2342; --on-bg: #f6ecd6; --on-sky: #fff3dc; --shadow: #0d0914;
+    --sky-1: #251d4a; --sky-2: #5b3256; --sun: #f6efcf; --stars: 1; --hill-back: #3b5634; --hill: #2c4227;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink);
+  background: radial-gradient(var(--bg-dot) 1.6px, transparent 1.8px) 0 0 / 22px 22px, var(--bg);
+  font: 19px/1.35 "Patrick Hand", "Comic Sans MS", cursive;
+}
+h1, h2, .big, button, .stat b { font-family: Gaegu, "Patrick Hand", cursive; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 22px 16px 40px; }
+
+header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; }
+h1 { margin: 0; font: 400 3.4rem/1 "Rubik Wet Paint", Gaegu, cursive; color: var(--accent); text-shadow: 3px 3px 0 var(--shadow); letter-spacing: 1px; }
+.scribble { display: flex; align-items: center; gap: 6px; rotate: -3deg; color: var(--on-bg); font-size: 1.2rem; }
+.scribble svg { width: 46px; flex: none; }
+.live { margin-left: auto; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 30px 8px 26px 10px; padding: 2px 12px; rotate: 2deg; font-size: 1rem; }
+.live::before { content: "●"; color: var(--green); margin-right: 4px; animation: pulse 1.6s infinite; }
+.live.off::before { color: var(--danger); animation: none; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 26px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; gap: 26px; }
+.card {
+  position: relative; background: var(--paper); padding: 18px;
+  border: 2.5px solid var(--ink); border-radius: 18px 6px 16px 8px / 8px 16px 6px 18px; box-shadow: 5px 5px 0 var(--shadow);
+}
+.tilt-l { rotate: -.7deg; } .tilt-r { rotate: .8deg; }
+.tape::before {
+  content: ""; position: absolute; top: -13px; left: 50%; width: 96px; height: 26px; translate: -50% 0; rotate: -4deg;
+  background: #f3e2a9d0; border-left: 2px dashed #0001; border-right: 2px dashed #0001;
+}
+h2 { margin: 0 0 10px; font-size: 1.6rem; font-weight: 700; }
+
+.scene { position: sticky; top: 16px; padding: 0; overflow: hidden; background: linear-gradient(var(--sky-1), var(--sky-2)); }
+.scene svg { display: block; width: 100%; height: auto; }
+.stage-label { position: absolute; left: 18px; top: 14px; z-index: 1; color: var(--on-sky); }
+.stage-label .big { font-size: 2.4rem; font-weight: 700; line-height: 1; background: linear-gradient(transparent 60%, #fff6 60%); padding: 0 4px; }
+.stage-label small { display: block; font-size: 1rem; padding-left: 4px; }
+.pop { animation: pop .6s; }
+.bubble {
+  position: absolute; right: 8%; top: 17%; max-width: 40%; padding: 8px 14px; z-index: 1; rotate: 3deg;
+  background: var(--paper); border: 2.5px solid var(--ink); border-radius: 20px 20px 20px 4px; font-size: 1.1rem;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 16px; bottom: -11px; width: 16px; height: 16px; rotate: 45deg; skew: 10deg 10deg;
+  background: var(--paper); border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink);
+}
+.dead-banner {
+  display: none; position: absolute; left: 50%; bottom: 18px; translate: -50% 0; rotate: -2deg; white-space: nowrap;
+  padding: 6px 18px; background: var(--danger); color: #fff; border: 2.5px solid var(--ink); font: 700 1.3rem Gaegu, cursive;
+}
+.is-dead .dead-banner { display: block; }
+
+.meter { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.meter .big { font-size: 3.4rem; font-weight: 700; line-height: .9; }
+.track {
+  display: flex; justify-content: flex-end; height: 26px; overflow: hidden;
+  border: 2.5px solid var(--ink); border-radius: 14px 4px 12px 6px;
+  background: repeating-linear-gradient(-45deg, #0000 0 9px, #0002 9px 16px), linear-gradient(90deg, #f7821b, #c98a3e 45%, #8a7440 75%, #5e6a2c);
+}
+.bar { width: 100%; background: var(--paper-2); border-left: 2.5px solid var(--ink); transition: width 1s ease; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+.stat { padding: 10px 12px; box-shadow: 3px 3px 0 #0003; }
+.stat:nth-child(1) { background: var(--note-1); rotate: -1.5deg; }
+.stat:nth-child(2) { background: var(--note-2); rotate: 1deg; }
+.stat:nth-child(3) { background: var(--note-3); rotate: 1.4deg; }
+.stat:nth-child(4) { background: var(--note-4); rotate: -1deg; }
+.stat b { display: block; font-size: 1.8rem; line-height: 1.1; }
+.stat span { font-size: 1rem; }
+
+button {
+  font-size: 1.3rem; font-weight: 700; padding: 8px 16px; cursor: pointer; color: var(--ink); background: var(--accent);
+  border: 2.5px solid var(--ink); border-radius: 14px 4px 12px 5px; box-shadow: 4px 4px 0 var(--shadow); transition: translate .1s, box-shadow .1s;
+}
+button:hover { translate: -1px -1px; box-shadow: 5px 5px 0 var(--shadow); }
+button:active { translate: 3px 3px; box-shadow: 1px 1px 0 var(--shadow); }
+button.ghost { background: var(--paper); font-size: 1.1rem; }
+button.grass { width: 100%; background: #8fcf5a; font-size: 1.6rem; rotate: -.6deg; }
+.paper-lines {
+  background: linear-gradient(90deg, transparent 38px, var(--margin) 38px 40px, transparent 40px),
+              repeating-linear-gradient(var(--paper) 0 31px, var(--rule) 31px 32px);
+  background-attachment: local;
+}
+textarea {
+  display: block; width: 100%; min-height: 130px; resize: vertical; padding: 4px 10px 0 48px; border: 2px solid var(--ink);
+  border-radius: 6px; font: 1.15rem/32px "Patrick Hand", cursive; color: var(--ink);
+}
+textarea:focus { outline: 3px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.count { color: var(--muted); }
+.count.ready { color: var(--green); font-weight: 700; }
+.msg { min-height: 1.4em; margin: 8px 0 0; color: var(--muted); }
+
+.feed { list-style: none; margin: 0 -18px -18px; padding: 0 12px 0 48px; max-height: 320px; overflow-y: auto; border-radius: 0 0 14px 16px; }
+.feed li { line-height: 32px; }
+.feed li:first-child { animation: slide .5s; }
+.feed time { color: var(--muted); font-size: .9rem; margin-right: 8px; }
+.research { margin-top: 30px; }
+.research summary { cursor: pointer; font: 700 1.4rem Gaegu, cursive; }
+.research ul { margin: 10px 0 0; padding-left: 20px; line-height: 1.5; }
+.research a { color: inherit; }
+footer { margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; color: var(--on-bg); }
+
+dialog { padding: 18px; width: min(520px, calc(100vw - 32px)); background: var(--paper); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 18px 6px 16px 8px; box-shadow: 6px 6px 0 var(--shadow); }
+dialog::backdrop { background: #1a1020aa; }
+dialog video { width: 100%; border: 2.5px solid var(--ink); border-radius: 8px; background: #000; transform: scaleX(-1); }
+.confetti { position: fixed; top: -40px; font-size: 30px; pointer-events: none; animation: fall linear forwards; z-index: 10; }
+
+/* ---- the scene ---- */
+.sun { fill: var(--sun); }
+.star { fill: #fff8d8; opacity: var(--stars); animation: twinkle 3s ease-in-out infinite; }
+.star:nth-of-type(2n) { animation-delay: 1.2s; } .star:nth-of-type(3n) { animation-delay: 2.1s; }
+.hill-back { fill: var(--hill-back); } .hill { fill: var(--hill); stroke: var(--ink); stroke-width: 2.5; }
+.tuft { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+@keyframes twinkle { 50% { opacity: calc(var(--stars) * .3); } }
+
+/* ---- the pumpkin ---- */
+.pumpkin { --mold: #9bb07a; }
+.pumpkin.s0 { --skin: #f7821b; --skin-d: #d9620f; --skin-l: #ff9a3c; --line: #9c3f06; --stem: #5d7f2a; --leaf: #7fae3a; }
+.pumpkin.s1 { --skin: #ec8526; --skin-d: #c96512; --skin-l: #f6993f; --line: #8d3e0a; --stem: #627a2b; --leaf: #8aa63c; }
+.pumpkin.s2 { --skin: #d18a3c; --skin-d: #ad6a26; --skin-l: #dc9a52; --line: #7a4514; --stem: #6b6f2c; --leaf: #9c9a40; }
+.pumpkin.s3 { --skin: #ae7f3e; --skin-d: #8c6230; --skin-l: #b98d4f; --line: #5d3f17; --stem: #6a5a2a; --leaf: #a08a42; }
+.pumpkin.s4 { --skin: #8a7440; --skin-d: #6c5a30; --skin-l: #94804c; --line: #4a3a18; --stem: #574426; --leaf: #8a6f3c; }
+.pumpkin.s5 { --skin: #6b6a3a; --skin-d: #55532c; --skin-l: #75744a; --line: #3b3818; --stem: #4a3a22; --leaf: #6a5432; }
+.pumpkin * { transition: fill 1.4s, stroke 1.4s, opacity .9s; }
+.lobe { stroke: var(--line); stroke-width: 3; }
+.out { fill: var(--skin-d); } .mid { fill: var(--skin); } .top { fill: var(--skin-l); }
+.stem-shape { fill: var(--stem); stroke: var(--line); stroke-width: 2.5; stroke-linejoin: round; }
+.vine { fill: none; stroke: var(--stem); stroke-width: 3.5; stroke-linecap: round; }
+.leaf { fill: var(--leaf); stroke: var(--line); stroke-width: 2; }
+.shadow { fill: #3a241433; transform-box: fill-box; transform-origin: center; transition: transform 1.4s; }
+.s4 .shadow { transform: scaleX(1.15); } .s5 .shadow { transform: scaleX(1.3); }
+
+.body, .stem, .breathe, .orbit { transform-box: view-box; }
+.body { transform-origin: 200px 344px; transition: transform 1.6s cubic-bezier(.45, 1.5, .5, 1); }
+.s1 .body { transform: scale(1.02, .97); }
+.s2 .body { transform: scale(1.05, .93); }
+.s3 .body { transform: scale(1.09, .87); }
+.s4 .body { transform: scale(1.17, .75) skewX(-4deg); }
+.s5 .body { transform: scale(1.28, .42); }
+.stem { transform-origin: 205px 150px; transition: transform 1.6s; }
+.s4 .stem { transform: rotate(-20deg); } .s5 .stem { transform: rotate(-70deg) translateY(10px); }
+.breathe { transform-origin: 200px 344px; animation: breathe 3.6s ease-in-out infinite; }
+.s4 .breathe { animation: wobble 1.4s ease-in-out infinite; } .s5 .breathe { animation: none; }
+.yay { animation: hop .8s; }
+
+.soft { fill: #6b3a12; opacity: 0; }
+.r1 .soft { opacity: .35; } .r3 .soft { opacity: .55; }
+.mold { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; transition: opacity 1s, transform 1.2s cubic-bezier(.3, 1.6, .5, 1); }
+.r2 .m2, .r3 .m3, .r4 .m4 { opacity: .92; transform: none; }
+.puddle { fill: var(--skin-d); stroke: var(--line); stroke-width: 2.5; opacity: 0; }
+.r4 .puddle { opacity: .35; } .r5 .puddle { opacity: 1; }
+
+.face path, .face .eye { stroke: #2b1a0e; stroke-width: 3.5; stroke-linecap: round; fill: none; }
+.face .eye, .face .tongue { stroke: none; }
+.face .eye { fill: #2b1a0e; }
+.face .tongue { fill: #e46a6a; }
+.glint { fill: #fff; }
+.blush { fill: #ff6b6b; opacity: .35; }
+.r3 .blush { opacity: 0; }
+.happy, .tired, .dead, .smile, .meh, .sad, .sweat { opacity: 0; }
+.s0 .happy, .s1 .happy, .s2 .tired, .s3 .tired, .s4 .tired, .s5 .dead,
+.s0 .smile, .s1 .meh, .s2 .meh, .s3 .sad, .s4 .sad, .s3 .sweat, .s4 .sweat { opacity: 1; }
+.happy .eye { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
+.face .sweat { fill: #8fd0ff; stroke: none; }
+
+.flies, .stink { opacity: 0; }
+.r3 .flies, .r3 .stink { opacity: 1; }
+.extra { opacity: 0; } .r4 .extra { opacity: 1; }
+.orbit { transform-origin: var(--o); animation: orbit var(--d) linear infinite; }
+.orbit.rev { animation-direction: reverse; }
+.orbit use { animation: bob .35s ease-in-out infinite alternate; }
+.stink path { fill: none; stroke: #8fa35a; stroke-width: 3; stroke-linecap: round; animation: stink 2.6s ease-in infinite; }
+.stink path:nth-child(2) { animation-delay: .9s; } .stink path:nth-child(3) { animation-delay: 1.7s; }
+.ghost { opacity: 0; } .s5 .ghost { opacity: .9; } .s5 .ghost > g { animation: float 3s ease-in-out infinite; }
+.ghost .sheet { fill: #fff; stroke: #c9b9a6; stroke-width: 2; }
+.ghost .eye { fill: #2b1a0e; }
+
+@keyframes breathe { 50% { transform: scale(1.015, .985); } }
+@keyframes wobble { 25% { transform: rotate(-1.5deg); } 75% { transform: rotate(1.5deg); } }
+@keyframes hop { 30% { transform: translateY(-24px) scale(1.04); } 60% { transform: translateY(0) scale(1.06, .94); } }
+@keyframes blink { 0%, 94%, 100% { transform: none; } 97% { transform: scaleY(.1); } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes bob { to { transform: translateY(-5px); } }
+@keyframes stink { from { transform: translateY(12px); opacity: 0; } 40% { opacity: .8; } to { transform: translateY(-36px); opacity: 0; } }
+@keyframes float { 50% { transform: translateY(-14px); } }
+@keyframes pop { 40% { transform: scale(1.15); } }
+@keyframes pulse { 50% { opacity: .35; } }
+@keyframes slide { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Rotkin</h1>
+    <div class="scribble">
+      <svg viewBox="0 0 50 30"><path d="M48 6 C34 2 16 8 6 22 M6 22 l2-10 M6 22 l10-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      he rots while you vibecode. be nice to him.
+    </div>
+    <div class="live" id="live">watching you</div>
+  </header>
+
+  <div class="grid">
+    <section class="card scene tilt-l">
+      <div class="stage-label"><div class="big" id="stage">Fresh</div><small>stage <span id="stage-num">1</span> of 6</small></div>
+      <div class="bubble" id="bubble">Feeling fresh!</div>
+
+      <svg id="pumpkin" class="pumpkin s0" viewBox="0 0 400 400" role="img" aria-label="Rotkin the pumpkin">
+        <defs>
+          <filter id="sketch"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter>
+          <radialGradient id="shine" cx=".38" cy=".28" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <g id="spore"><circle r="12" fill="var(--mold)"/><circle r="7" cx="-4" cy="-3" fill="#c6d4a8"/><circle r="3" cx="6" cy="5" fill="#e6eed6"/><circle r="2.5" cx="10" cy="-8" fill="#c6d4a8"/><circle r="2" cx="-13" cy="8" fill="#b4c592"/></g>
+          <g id="fly">
+            <ellipse rx="4.5" ry="3.5" fill="#2b2118"/>
+            <ellipse cx="-3" cy="-4" rx="4" ry="2.5" fill="#d8ecff" opacity=".85"><animate attributeName="ry" values="2.5;.4;2.5" dur=".09s" repeatCount="indefinite"/></ellipse>
+            <ellipse cx="3" cy="-4" rx="4" ry="2.5" fill="#d8ecff" opacity=".85"><animate attributeName="ry" values=".4;2.5;.4" dur=".09s" repeatCount="indefinite"/></ellipse>
+            <circle cx="4" cy="-1" r="1.2" fill="#d33"/>
+          </g>
+        </defs>
+
+        <circle class="sun" cx="335" cy="78" r="30"/>
+        <circle class="star" cx="60" cy="110" r="2.5"/><circle class="star" cx="250" cy="40" r="2"/><circle class="star" cx="380" cy="150" r="2.5"/>
+        <circle class="star" cx="140" cy="60" r="1.8"/><circle class="star" cx="30" cy="200" r="2"/><circle class="star" cx="290" cy="120" r="1.6"/>
+        <path class="hill-back" d="M0 318 Q90 286 180 306 T400 300 V400 H0z"/>
+        <path class="hill" d="M-4 342 Q100 318 210 334 T404 330 V404 H-4z"/>
+        <ellipse class="shadow" cx="200" cy="346" rx="128" ry="13"/>
+        <path class="puddle" d="M48 344 q30-22 152-18 q120-4 152 18 q6 16-40 16 q-6 12-24 4 q-60 6-176 0 q-14 10-26-2 q-44 0-38-18z"/>
+
+        <g class="breathe">
+          <g class="body" filter="url(#sketch)">
+            <g class="stem">
+              <path class="vine" d="M214 138 c20-16 44-8 40 8 c-3 12-20 11-18 1"/>
+              <path class="leaf" d="M212 126 c16-26 54-28 66-12 c-22 2-40 16-66 12z"/>
+              <path class="stem-shape" d="M190 152 c-6-22 0-46 22-56 l9 12 c-14 8-18 24-12 44z"/>
+            </g>
+            <ellipse class="lobe out" cx="126" cy="252" rx="78" ry="86"/>
+            <ellipse class="lobe out" cx="274" cy="252" rx="78" ry="86"/>
+            <ellipse class="lobe mid" cx="162" cy="248" rx="70" ry="94"/>
+            <ellipse class="lobe mid" cx="238" cy="248" rx="70" ry="94"/>
+            <ellipse class="lobe top" cx="200" cy="246" rx="58" ry="98"/>
+            <ellipse cx="200" cy="246" rx="150" ry="96" fill="url(#shine)"/>
+            <ellipse class="soft" cx="112" cy="286" rx="24" ry="17"/>
+
+            <g class="mold m2"><use href="#spore" transform="translate(140 212)"/><use href="#spore" transform="translate(252 304) scale(.8)"/><use href="#spore" transform="translate(304 236) scale(.7)"/></g>
+            <g class="mold m3"><use href="#spore" transform="translate(92 262) scale(1.2)"/><use href="#spore" transform="translate(214 182) scale(.8)"/><use href="#spore" transform="translate(172 318) scale(.9)"/><use href="#spore" transform="translate(278 190) scale(.6)"/></g>
+            <g class="mold m4"><use href="#spore" transform="translate(128 196) scale(1.3)"/><use href="#spore" transform="translate(318 282) scale(1.1)"/><use href="#spore" transform="translate(240 330) scale(.9)"/><use href="#spore" transform="translate(70 232) scale(.8)"/><use href="#spore" transform="translate(250 262) scale(.5)"/></g>
+
+            <g class="face">
+              <ellipse class="blush" cx="162" cy="270" rx="11" ry="6"/>
+              <ellipse class="blush" cx="238" cy="270" rx="11" ry="6"/>
+              <g class="happy"><ellipse class="eye" cx="178" cy="246" rx="7" ry="10"/><ellipse class="eye" cx="222" cy="246" rx="7" ry="10"/><circle class="glint" cx="180" cy="242" r="2.5"/><circle class="glint" cx="224" cy="242" r="2.5"/></g>
+              <g class="tired"><path d="M168 246 h20 M212 246 h20"/><path class="eye" d="M169 247 a9 8 0 0 0 18 0z M213 247 a9 8 0 0 0 18 0z"/></g>
+              <g class="dead"><path d="M170 238 l16 16 M186 238 l-16 16 M214 238 l16 16 M230 238 l-16 16"/></g>
+              <path class="smile" d="M186 270 q14 14 28 0"/>
+              <path class="meh" d="M187 276 q6-5 13 0 t13 0"/>
+              <path class="sad" d="M186 282 q14-13 28 0"/>
+              <g class="dead"><path d="M182 278 q18-9 36 0"/><path class="tongue" d="M202 277 q0 13 9 10 q4-3 2-11z"/></g>
+              <path class="sweat" d="M252 214 q-7 11 0 15 q7-4 0-15z"/>
+            </g>
+          </g>
+        </g>
+
+        <g class="stink"><path d="M120 150 q-8-10 0-20 q8-10 0-20"/><path d="M290 160 q-8-10 0-20 q8-10 0-20"/><path d="M200 120 q-8-10 0-20 q8-10 0-20"/></g>
+        <g class="flies">
+          <g class="orbit" style="--o: 200px 220px; --d: 4.2s"><use href="#fly" x="200" y="100"/></g>
+          <g class="orbit rev" style="--o: 150px 190px; --d: 3.1s"><use href="#fly" x="110" y="160"/></g>
+          <g class="orbit" style="--o: 260px 200px; --d: 2.6s"><use href="#fly" x="320" y="170"/></g>
+          <g class="extra">
+            <g class="orbit rev" style="--o: 200px 260px; --d: 5s"><use href="#fly" x="60" y="280"/></g>
+            <g class="orbit" style="--o: 230px 160px; --d: 3.6s"><use href="#fly" x="250" y="110"/></g>
+          </g>
+        </g>
+        <g class="ghost" transform="translate(200 150)">
+          <g>
+            <path class="sheet" d="M-22 18 v-18 a22 22 0 0 1 44 0 v18 l-7-6 -7 6 -8-6 -7 6 -8-6z"/>
+            <path d="M-2-21 q2-9 8-11" stroke="#6a5432" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <circle class="eye" cx="-8" cy="-2" r="3"/><circle class="eye" cx="8" cy="-2" r="3"/>
+          </g>
+        </g>
+        <path class="tuft" d="M30 372 l4-14 M38 372 l1-18 M45 372 l-3-13 M330 380 l3-14 M338 380 l0-17 M346 380 l-4-12 M90 392 l2-10 M96 392 l-2-12"/>
+      </svg>
+      <div class="dead-banner">R.I.P. prompts blocked till you touch grass</div>
+    </section>
+
+    <div class="col">
+      <section class="card tape tilt-r">
+        <div class="meter"><span class="big" id="rot">0</span><span>/ 100 rot-o-meter</span></div>
+        <div class="track"><div class="bar" id="bar"></div></div>
+        <div class="stats">
+          <div class="stat"><b id="session">0 min</b><span>without a break</span></div>
+          <div class="stat"><b id="tokens">0</b><span>Claude output tokens</span></div>
+          <div class="stat"><b id="doom">x0</b><span>doom streak</span></div>
+          <div class="stat"><b id="ratio">1 : 0</b><span>brain : bot</span></div>
+        </div>
+      </section>
+
+      <section class="card tilt-l">
+        <button class="grass" id="grass-btn">🌱 go touch grass (−40)</button>
+        <form id="think" style="margin-top:16px">
+          <h2>🧠 think mode</h2>
+          <p>Without looking at the code, explain in your own words what Claude just built and why.</p>
+          <textarea class="paper-lines" id="think-text" placeholder="so Claude changed..."></textarea>
+          <div class="row"><span class="count" id="count">0 / 40 words</span><button>heal w/ my brain</button></div>
+          <p class="msg" id="think-msg"></p>
+        </form>
+      </section>
+
+      <section class="card tape tilt-r">
+        <h2>rot log</h2>
+        <ul class="feed paper-lines" id="feed"></ul>
+      </section>
+    </div>
+  </div>
+  <details class="card research">
+    <summary>Why does it rot?</summary>
+    <ul>
+      <li>Developers using AI scored 50% vs 67% on a skills quiz, but those who asked conceptual questions kept their learning (<a href="https://www.anthropic.com/research/AI-assistance-coding-skills">Anthropic, 2026</a>)</li>
+      <li>Experienced developers felt 20% faster with AI but were actually 19% slower (<a href="https://arxiv.org/abs/2507.09089">METR, 2025</a>)</li>
+      <li>More confidence in AI was linked to less critical thinking (<a href="https://doi.org/10.1145/3706598.3713778">Microsoft Research &amp; CMU, CHI 2025</a>)</li>
+      <li>ChatGPT users struggled to recall essays they had just written (<a href="https://arxiv.org/abs/2506.08872">MIT Media Lab, 2025, early-stage</a>)</li>
+      <li>Short breaks reduce fatigue; longer ones help more after draining work (<a href="https://doi.org/10.1371/journal.pone.0272460">PLOS ONE meta-analysis, 2022</a>)</li>
+    </ul>
+  </details>
+  <footer><span>made at Pumpkin Playground, CSULB, on very little sleep</span><button class="ghost" id="reset">new pumpkin</button></footer>
+</div>
+
+<dialog id="cam">
+  <h2>show me the grass 🌿</h2>
+  <video id="video" autoplay playsinline muted></video>
+  <p class="msg" id="cam-msg">Point your camera at some real, outdoor grass.</p>
+  <div class="row"><button class="ghost" id="cam-close" type="button">nvm</button><button id="snap" type="button">📸 check it</button></div>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const STAGES = ["Fresh", "Soft Spot", "Moldy", "Fruit Flies", "Collapsing", "Dead"];
+const QUIPS = [
+  ["Feeling fresh!", "I believe in you. Mostly.", "Smells like focus in here."],
+  ["Is it warm in here?", "I have a weird spot. It's probably fine.", "Maybe a stretch?"],
+  ["I'm growing... something.", "Please think one (1) thought.", "This mold has opinions."],
+  ["The flies say hi.", "I've made new friends. Unfortunately.", "Do you smell that? It's me."],
+  ["Tell my seeds I loved them.", "I can't feel my stem.", "Go. Outside. Now."],
+  ["...", "(ghostly pumpkin noises)", "I died doing what I loved: watching you type 'fix it'."],
+];
+const REJECTS = [
+  "That's not grass. That's your keyboard.",
+  "Our scientists detect zero chlorophyll.",
+  "Is that... a monitor? Go outside.",
+  "Nice try. The pumpkin wants real grass.",
+  "That's a hoodie. Grass is the green stuff outside.",
+];
+const pick = list => list[Math.floor(Math.random() * list.length)];
+let stage = -1, stream;
+
+async function api(path, body) {
+  const options = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
+  return (await fetch(path, options)).json();
+}
+
+function ago(t) {
+  const s = Date.now() / 1000 - t;
+  return s < 60 ? "now" : s < 3600 ? Math.floor(s / 60) + "m ago" : Math.floor(s / 3600) + "h ago";
+}
+
+function render(s) {
+  const i = STAGES.indexOf(s.stage);
+  const reached = Array.from({ length: i }, (_, k) => "r" + (k + 1)).join(" ");
+  $("#pumpkin").setAttribute("class", `pumpkin s${i} ${reached}`);
+  document.body.classList.toggle("is-dead", i === 5);
+  if (i !== stage) {
+    stage = i;
+    $("#stage").textContent = s.stage;
+    $("#stage-num").textContent = i + 1;
+    $("#bubble").textContent = pick(QUIPS[i]);
+    $("#stage").classList.remove("pop");
+    void $("#stage").offsetWidth;
+    $("#stage").classList.add("pop");
+  }
+  $("#rot").textContent = Math.round(s.rot);
+  $("#bar").style.width = 100 - s.rot + "%";
+  const m = s.session_minutes;
+  $("#session").textContent = m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`;
+  $("#tokens").textContent = s.tokens.toLocaleString();
+  $("#doom").textContent = (s.doom_streak > 2 ? "🔥 x" : "x") + s.doom_streak;
+  $("#ratio").textContent = "1 : " + s.ratio.toLocaleString();
+  $("#feed").replaceChildren(...s.feed.map(e => {
+    const li = document.createElement("li");
+    const time = document.createElement("time");
+    time.textContent = ago(e.t);
+    li.append(time, e.msg);
+    return li;
+  }));
+}
+
+async function poll() {
+  try {
+    render(await api("/state"));
+    $("#live").className = "live";
+  } catch {
+    $("#live").className = "live off";
+  }
+}
+
+function celebrate(emoji) {
+  $("#pumpkin").classList.add("yay");
+  setTimeout(() => $("#pumpkin").classList.remove("yay"), 800);
+  for (let n = 0; n < 36; n++) {
+    const bit = document.createElement("span");
+    bit.className = "confetti";
+    bit.textContent = pick(emoji);
+    bit.style.left = Math.random() * 100 + "vw";
+    bit.style.animationDuration = 2 + Math.random() * 2 + "s";
+    bit.style.animationDelay = Math.random() * .6 + "s";
+    document.body.append(bit);
+    setTimeout(() => bit.remove(), 5000);
+  }
+}
+
+function greenness() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 160; canvas.height = 120;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage($("#video"), 0, 0, 160, 120);
+  const px = ctx.getImageData(0, 0, 160, 120).data;
+  let green = 0;
+  for (let p = 0; p < px.length; p += 4) {
+    const [r, g, b] = [px[p], px[p + 1], px[p + 2]];
+    if (r + g + b > 150 && g > r + 20 && g > b + 20) green++;
+  }
+  return green / (px.length / 4);
+}
+
+function closeCam() {
+  stream?.getTracks().forEach(t => t.stop());
+  $("#cam").close();
+}
+
+$("#grass-btn").onclick = async () => {
+  $("#cam-msg").textContent = "Point your camera at some real, outdoor grass.";
+  $("#cam").showModal();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    $("#video").srcObject = stream;
+  } catch {
+    $("#cam-msg").textContent = "No camera access. The pumpkin can't verify your grass.";
+  }
+};
+
+$("#snap").onclick = async () => {
+  const g = greenness();
+  if (g > 0.35) {
+    const res = await api("/grass", {});
+    closeCam();
+    render(res);
+    celebrate(["🌿", "🍃", "🌱", "☘️"]);
+  } else {
+    $("#cam-msg").textContent = `${pick(REJECTS)} (${Math.round(g * 100)}% green, need 35%)`;
+  }
+};
+
+$("#cam-close").onclick = closeCam;
+$("#cam").onclose = () => stream?.getTracks().forEach(t => t.stop());
+
+$("#think-text").oninput = e => {
+  const n = e.target.value.trim().split(/\s+/).filter(Boolean).length;
+  $("#count").textContent = `${n} / 40 words`;
+  $("#count").classList.toggle("ready", n >= 40);
+};
+
+$("#think").onsubmit = async e => {
+  e.preventDefault();
+  const res = await api("/think", { text: $("#think-text").value });
+  $("#think-msg").textContent = res.message;
+  if (res.ok) {
+    $("#think-text").value = "";
+    $("#think-text").oninput({ target: $("#think-text") });
+    celebrate(["🧠", "💡", "✨"]);
+  }
+  render(res);
+};
+
+$("#reset").onclick = async () => {
+  if (confirm("Throw this pumpkin away and grow a new one?")) render(await api("/reset", {}));
+};
+
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>

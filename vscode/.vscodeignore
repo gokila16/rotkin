@@ -1,0 +1,4 @@
+bundle.js
+.gitignore
+**/__pycache__/**
+*.vsix
