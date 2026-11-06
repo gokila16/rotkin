@@ -14,9 +14,11 @@ BREAK_AFTER = 5       # a gap this long starts healing
 REAL_BREAK = 10       # a gap this long ends the session
 GRACE = 25            # free minutes of continuous session
 SESSION_ROT = 0.5     # rot per minute after the grace period
-TOKENS_PER_ROT = 10000
-DOOM_WORDS = 4        # prompts shorter than this count as doom
-DOOM_RE = re.compile(r"\b(fix it|still broken|doesn'?t work|try again|pls|same error)\b", re.I)
+DOOM_RE = re.compile(r"\b(fix it|still broken|(doesn'?t|not|isn'?t) work(ing)?|try again|pls|same error)\b", re.I)
+# Handing Claude a decision that is yours to make: "should I…", "you decide", "…or not?"
+DELEGATE_RE = re.compile(r"\b(should (i|we)\b|should\b[^.?!]*\bor not\b|you (decide|choose|pick)\b|decide for me|pick one for me|"
+                         r"make (a|the) (choice|call|decision)|what would you do|which (one )?should|do you (actually |really )?think)", re.I)
+DELEGATE_ROT = 2
 CURIOUS_RE = re.compile(r"\b(explain|why does|why is|how does|what does|walk me through|help me understand)\b", re.I)
 DOOM_WINDOW = 3       # doom prompts this close together build a streak
 DOOM_FREE = 3         # streak length you get away with
@@ -104,11 +106,14 @@ def on_prompt(s, text):
     words = len(text.split())
     s["session_start"] = s["session_start"] or now
     s["words"] += words
-    if CURIOUS_RE.search(text):
+    if DELEGATE_RE.search(text):
+        add(s, DELEGATE_ROT)
+        log(s, f"You asked Claude to make your call: '{text[:40]}'. Decide first, then ask.")
+    elif CURIOUS_RE.search(text):
         s["doom_streak"] = 0
         add(s, -CURIOSITY_HEAL)
         log(s, f"Curiosity detected 🧠 (+{CURIOSITY_HEAL})")
-    elif words < DOOM_WORDS or DOOM_RE.search(text):
+    elif DOOM_RE.search(text):
         streak = minutes_since(s["doom_last"]) <= DOOM_WINDOW
         s["doom_streak"] = s["doom_streak"] + 1 if streak else 1
         s["doom_last"] = now
@@ -124,10 +129,10 @@ def on_prompt(s, text):
 
 
 def on_tokens(s, n):
+    """Counts Claude's output for the brain-to-bot ratio. Volume alone never rots the pumpkin."""
     if n:
         s["tokens"] += n
-        add(s, n / TOKENS_PER_ROT)
-        log(s, f"Claude burned {n:,} tokens. The pumpkin feels the heat.")
+        log(s, f"Claude wrote {n:,} tokens.")
         ratio_penalty(s)
 
 

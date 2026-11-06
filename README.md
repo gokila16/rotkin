@@ -6,7 +6,7 @@
 
 We all know the loop. Claude writes 400 lines, something breaks, you type "fix it". Then "still broken". Then "pls". Two hours later you haven't stood up, and you couldn't explain what your own code does.
 
-Rotkin keeps score. Every doom prompt, giant reply and hour without a break makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
+Rotkin keeps score. It never rots because you use AI, only because of how: every doom prompt, every decision you hand to Claude and every hour without a break makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
 
 Python standard library only. No accounts, nothing leaves your machine.
 
@@ -25,11 +25,11 @@ Prefer VS Code? [Install Rotkin from the Marketplace](https://marketplace.visual
 ## How it rots
 
 - **Long sessions:** +0.5 per minute after 25 minutes without a 10-minute break
-- **Token burn:** +1 per 10,000 tokens Claude writes
-- **Doom-prompting:** "fix it", "still broken", "try again"… past 3 in a row, +2 each
+- **Doom-prompting:** "fix it", "still broken", "not working", "try again"… past 3 in a row, +2 each
+- **Handing over your decisions:** "should I…", "you decide", "which one should we…", "…or not?" +2 each. Make the call, then ask Claude to help with it.
 - **Brain-to-bot ratio:** a little rot whenever Claude writes over 1,000 tokens per word you wrote
 
-A bad session (a prompt every 2 minutes, mostly "fix it", no breaks) makes it moldy in about an hour and kills it in about two.
+How much Claude writes doesn't count by itself, and quick replies like "yes", "go ahead" or "run the tests" are fine. A bad session (a prompt every 2 minutes, mostly "fix it", no breaks) makes it moldy in about 80 minutes and kills it in under 3 hours.
 
 ## How it heals
 

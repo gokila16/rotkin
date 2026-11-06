@@ -2,7 +2,7 @@
 
 **A pumpkin in your sidebar that rots while you vibecode with Claude Code, and heals when you take breaks and think for yourself.**
 
-Every "fix it", every 20,000-token reply, every hour without a break makes Rotkin a little moldier. Let it die and Claude Code stops taking your prompts until you touch actual grass.
+Every "fix it", every decision you hand to Claude, every hour without a break makes Rotkin a little moldier. Using AI never rots it by itself; using it on autopilot does. Let it die and Claude Code stops taking your prompts until you touch actual grass.
 
 ## Requirements
 
@@ -30,8 +30,8 @@ The extension starts the dashboard server at http://localhost:8765 by itself. No
 | | |
 |---|---|
 | Long sessions | +0.5 per minute after 25 minutes without a 10-minute break |
-| Token burn | +1 per 10,000 tokens Claude writes |
-| Doom-prompting | "fix it", "still broken", "try again", "pls"… 4+ in a row, each within 3 minutes of the last = +2 each |
+| Doom-prompting | "fix it", "still broken", "not working", "try again", "pls"… 4+ in a row, each within 3 minutes of the last = +2 each |
+| Handing over your decisions | "should I…", "you decide", "which one should we…", "…or not?" = +2 each |
 | Brain-to-bot ratio | Claude writing over 1,000 tokens per word you wrote |
 
 Walking away for more than 5 minutes heals 2 rot per minute. Stay away 10 minutes and it counts as a real break: the session timer and token count reset, and you heal 10 more.
