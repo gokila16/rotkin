@@ -6,7 +6,7 @@
 
 We all know the loop. Claude writes 400 lines, something breaks, you type "fix it". Then "still broken". Then "pls". Two hours later you haven't stood up, and you couldn't explain what your own code does.
 
-Rotkin keeps score. It never rots because you use AI, only because of how: every doom prompt, every decision you hand to Claude and every hour without a break makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
+Rotkin keeps score. It never rots because you use AI, or because you've been at it a long time, only because of how: every stuck "fix it" loop, every decision you hand to Claude, every "do that" and every pile of changes you wave through without asking what Claude did makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
 
 Python standard library only. No accounts, nothing leaves your machine.
 
@@ -24,21 +24,24 @@ Prefer VS Code? [Install Rotkin from the Marketplace](https://marketplace.visual
 
 ## How it rots
 
-- **Long sessions:** +0.5 per minute after 25 minutes without a 10-minute break
-- **Doom-prompting:** "fix it", "still broken", "not working", "try again"… past 3 in a row, +2 each
-- **Handing over your decisions:** "should I…", "you decide", "which one should we…", "…or not?" +2 each. Make the call, then ask Claude to help with it.
+- **Stuck loops:** "fix it", "still broken", "same error", a pasted error or log with almost no words of your own, or sending the same prompt again. Two are free, then +3 each until you break the loop.
+- **Not reading the reply:** answering a long reply faster than you could have read it (30% of reading time at 250 words a minute, using only the text Claude showed you, not its code edits). Two are free, then +3 each.
+- **Handing over the wheel:** "ok", "do that", "do phase 2", "next step", "continue with…", or any prompt under 6 words. That's an order, not a thought. Two are free, then +2 each.
+- **Not looking at what Claude did:** after a big turn (5+ tool calls or 4,000+ tokens), a next prompt that doesn't ask about it ("what did you change?", "why did you…") or bring your own take rots 0.5, plus 1 per 8,000 tokens Claude wrote, up to 3. The longer the response, the more it costs.
+- **Claude didn't explain itself:** a busy turn explained in fewer than 6 words per tool call (150 is always enough). +2.
+- **Handing over your decisions:** "should I…", "you decide", "which one should we…" with no lean of your own. +1, and +3 for each more within your last 6 prompts.
 - **Brain-to-bot ratio:** a little rot whenever Claude writes over 1,000 tokens per word you wrote
 
-How much Claude writes doesn't count by itself, and quick replies like "yes", "go ahead" or "run the tests" are fine. A bad session (a prompt every 2 minutes, mostly "fix it", no breaks) makes it moldy in about 80 minutes and kills it in under 3 hours.
+Rotkin reads the stretch of the thread, not single messages. Add your own take ("I'm leaning sqlite because…", "maybe it's the cookie domain") or ask about Claude's work and every streak clears: no rot, and breaking a stuck loop heals 3. A new real request also clears stuck and skimming streaks, but not hand-offs. Time alone never rots or heals it: a long focused session is fine, and sitting idle doesn't undo anything. An occasional "yes" is fine. Over two hours with no breaks, someone who writes real requests and asks why now and then stays Fresh, someone who never looks at what Claude did turns Moldy, and a full autopilot session ("do that", "fix it", pasted errors, answered within seconds) kills it in about 70 minutes.
 
 ## How it heals
 
-- **Step away:** 2 per minute after 5 minutes idle. At 10 minutes it counts as a real break: +10 more and the session starts over.
-- **Ask why:** prompts like "explain", "why does" or "walk me through" heal 3 and reset your doom streak.
+- **Take a real break:** 10 minutes away heals 5 once and starts your streaks over. Idle minutes don't heal by themselves, since reading a long reply isn't a break.
+- **Ask why:** prompts like "explain", "why did you", "what changed" or "walk me through" heal 1, cancel the rot for not looking at Claude's work and clear your streaks.
 - **🌱 Touch Grass:** point your webcam at real grass for −40. Your keyboard doesn't count.
 - **🧠 Think Mode:** without looking at the code, explain what Claude just built and why, in 40 words of your own. −15, once every 30 minutes.
 
-It goes **Fresh → Soft Spot → Moldy → Fruit Flies → Collapsing → Dead**. All the numbers are at the top of `rotkin.py` if you want to be nicer to yourself.
+A small bruise shows from 5 rot, so you can see it start. It goes **Fresh → Soft Spot → Moldy → Fruit Flies → Collapsing → Dead**. All the numbers are at the top of `rotkin.py` if you want to be nicer to yourself.
 
 ## The research behind it
 

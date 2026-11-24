@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Rotkin: a pumpkin that rots while you vibecode and heals when you think for yourself."""
+import difflib
 import fcntl
 import json
 import os
@@ -10,24 +11,64 @@ from pathlib import Path
 
 # ---- Tuning knobs (times are in minutes) ----
 SPEED = float(os.environ.get("ROTKIN_SPEED", 1))  # >1 makes time fly for demos
-BREAK_AFTER = 5       # a gap this long starts healing
-REAL_BREAK = 10       # a gap this long ends the session
-GRACE = 25            # free minutes of continuous session
-SESSION_ROT = 0.5     # rot per minute after the grace period
+REAL_BREAK = 10       # a gap this long is a real break: one heal, and your streaks start over
+# Time alone never rots or heals the pumpkin. Reading Claude's reply for 8 minutes isn't a break,
+# and a long focused session isn't autopilot.
+# Prompts are judged as a stretch, not one by one: the last few prompts form a window,
+# and a prompt with your own thinking in it clears the window.
+RECENT = 6            # how many recent prompts the window holds
 DOOM_RE = re.compile(r"\b(fix it|still broken|(doesn'?t|not|isn'?t) work(ing)?|try again|pls|same error)\b", re.I)
+# A pasted error or stack trace
+ERROR_RE = re.compile(r"Traceback \(most recent call last\)|^\s*[\w.]*(Error|Exception)\b\s*[:(]|\berror(\[\w+\])?:|"
+                      r"^\s+at \S+ \(|npm ERR!|panicked at|\bFAILED\b", re.I | re.M)
 # Handing Claude a decision that is yours to make: "should I…", "you decide", "…or not?"
 DELEGATE_RE = re.compile(r"\b(should (i|we)\b|should\b[^.?!]*\bor not\b|you (decide|choose|pick)\b|decide for me|pick one for me|"
                          r"make (a|the) (choice|call|decision)|what would you do|which (one )?should|do you (actually |really )?think)", re.I)
-DELEGATE_ROT = 2
-CURIOUS_RE = re.compile(r"\b(explain|why does|why is|how does|what does|walk me through|help me understand)\b", re.I)
-DOOM_WINDOW = 3       # doom prompts this close together build a streak
-DOOM_FREE = 3         # streak length you get away with
-DOOM_ROT = 2
+# Your own take: a reason, a lean, or a guess about the bug
+OWN_RE = re.compile(r"\b(because|i think|i'?m leaning|leaning (to|towards)|i'?d rather|i prefer|my guess|i suspect|"
+                    r"maybe it'?s|could it be|what if|the problem is|i noticed|i'?m pretty sure)\b", re.I)
+# A "sure, keep going" with nothing of your own in it
+STAMP_RE = re.compile(r"^\W*(ok(ay)?|k|yes|yep|yeah|y|sure|continue|go( ahead| on)?|do it|proceed|lgtm|looks good|sounds good|"
+                      r"perfect|great|nice|next|keep going|ship it|approved?)\W*$", re.I)
+# Telling Claude to carry on with its own plan: "do that", "do phase 2", "next step", "continue with step 3"
+GO_RE = re.compile(r"^\W*((ok(ay)?|yes|yeah|sure|so|now|then|alright|pls|please|great|cool)\W+)*"
+                   r"(do|continue( on)?( with)?|proceed( with)?|go( ahead)?( with)?|move on( to)?|start( on| with)?|"
+                   r"implement|let'?s( do)?|keep going( with)?|on to|next)\W+"
+                   r"(that|this|it|those|these|them|the rest|everything|all( of)?( it| them| that)?|the plan|"
+                   r"(the )?next( one| step| phase| part| task)?|(phase|step|part|stage|task|option) ?\w+)\b", re.I)
+# Asking about what Claude did, or how something works
+CURIOUS_RE = re.compile(r"\b(explain|why does|why is|why did|how does|how did|what does|what did (you|it)|what changed|"
+                        r"what was changed|walk me through|help me understand|summari[sz]e what|show me (what|the diff|the change))\b", re.I)
+DECIDE_ROT = 1        # handing Claude one decision with no lean of your own
+STUCK_FREE = 2        # "fix it"s and pasted errors in the window before it rots
+STREAK_ROT = 3
+LOOP_BREAK_HEAL = 3   # extra heal for breaking a stuck loop with your own idea
+NEW_TASK_WORDS = 6    # prompts shorter than this are orders, not thinking; a longer request ends a stuck loop
+# Brain-off signals
+READ_WPM = 250        # reading speed for Claude's replies
+SKIM_SHARE = 0.3      # answering before you could read this share of the reply means you didn't read it
+SKIM_MIN_WORDS = 120  # replies shorter than this are quick to read anyway
+SKIM_CAP = 90         # seconds; past this you had time to read the parts that matter
+SKIM_FREE = 2         # unread replies in the window before it rots
+HANDOFF_FREE = 2      # "do that", "next step", "ok" or a short order in the window before it rots
+HANDOFF_ROT = 2
+PASTE_LINES = 3       # a prompt this many lines long...
+PASTE_OWN_WORDS = 5   # ...with fewer of your own words than this is a bare paste
+REPEAT_WORDS = 4      # prompts at least this long can count as repeats
+REPEAT_SIMILAR = 0.95  # this similar to a recent prompt counts as sending it again
+# Big turns: Claude did a lot, so look at it
+BUSY_ACTIONS = 5      # tool calls in one turn that make it a busy turn
+BIG_TURN = 4000       # or output tokens in one turn
+UNCHECKED_BASE = 0.5   # moving on from a big turn without asking what Claude did...
+UNCHECKED_PER = 8000  # ...plus 1 per this many tokens Claude wrote in it...
+UNCHECKED_CAP = 3     # ...up to this much
+EXPLAIN_PER_ACTION = 6   # words Claude should write per tool call in a busy turn...
+EXPLAIN_ENOUGH = 150     # ...though this many words is always enough
+UNEXPLAINED_ROT = 2
 RATIO_LIMIT = 1000    # Claude tokens per word you wrote
 RATIO_ROT = 0.5
-IDLE_HEAL = 2         # per idle minute past BREAK_AFTER
-REAL_BREAK_HEAL = 10
-CURIOSITY_HEAL = 3
+REAL_BREAK_HEAL = 5
+CURIOSITY_HEAL = 1    # small on purpose: asking already cancels the rot for not looking
 GRASS_HEAL = 40
 THINK_HEAL = 15
 THINK_WORDS = 40
@@ -40,6 +81,7 @@ WORSE = {
     "Collapsing": "Structural integrity: questionable.",
     "Dead": "💀 Rotkin has died. Prompts are now blocked.",
 }
+SPECK = 5             # rot where the first bruise shows on the pumpkin
 EMOJI = {"Fresh": "🎃", "Soft Spot": "🎃", "Moldy": "🍄", "Fruit Flies": "🪰", "Collapsing": "😵", "Dead": "💀"}
 
 HOME = Path(os.environ.get("ROTKIN_HOME", Path.home() / ".rotkin"))
@@ -49,8 +91,9 @@ DEATH = "🎃💀 Your pumpkin has died. Touch grass (or explain what Claude bui
 
 
 def fresh():
-    return {"rot": 0, "tick": time.time(), "last_prompt": 0, "session_start": 0, "doom_last": 0,
-            "think_at": 0, "doom_streak": 0, "words": 0, "tokens": 0, "counted": {}, "feed": []}
+    return {"rot": 0, "tick": time.time(), "last_prompt": 0, "session_start": 0, "think_at": 0,
+            "recent": [], "said": [], "stop_at": 0, "reply_words": 0, "unchecked": 0, "turn_actions": 0,
+            "words": 0, "tokens": 0, "counted": {}, "feed": []}
 
 
 def minutes_since(t):
@@ -69,33 +112,77 @@ def add(s, amount):
     before = stage(s["rot"])
     s["rot"] = min(100, max(0, s["rot"] + amount))
     after = stage(s["rot"])
+    if s["rot"] - amount < SPECK <= s["rot"]:
+        log(s, "A tiny bruise appears. Nothing to worry about. Yet.")
     if after != before:
         log(s, WORSE[after] if amount > 0 else f"Healing... back to {after}.")
 
 
 def end_session(s):
-    s.update(session_start=0, doom_streak=0, words=0, tokens=0)
+    s.update(session_start=0, recent=[], said=[], unchecked=0, words=0, tokens=0)
 
 
 def tick(s):
-    """Apply time-based rot and healing since the last time state was read."""
-    dt = minutes_since(s["tick"])
+    """Notice a real break since the last time state was read. Idle minutes don't heal by themselves."""
     s["tick"] = time.time()
-    idle = minutes_since(s["last_prompt"])
-    if idle > BREAK_AFTER:
-        add(s, -IDLE_HEAL * min(dt, idle - BREAK_AFTER))
-        if idle > REAL_BREAK and s["session_start"]:
-            end_session(s)
-            add(s, -REAL_BREAK_HEAL)
-            log(s, "Real break taken 🌿")
-    elif s["session_start"]:
-        overtime = minutes_since(s["session_start"]) - GRACE
-        add(s, SESSION_ROT * max(0, min(dt, overtime)))
+    if s["session_start"] and minutes_since(s["last_prompt"]) > REAL_BREAK:
+        end_session(s)
+        add(s, -REAL_BREAK_HEAL)
+        log(s, f"Real break taken 🌿 (+{REAL_BREAK_HEAL}, streaks start over)")
 
 
 def ratio_penalty(s):
     if s["tokens"] > RATIO_LIMIT * max(s["words"], 1):
         add(s, RATIO_ROT)
+
+
+def own_words(text):
+    """Words you wrote yourself, leaving out fenced code and lines that look pasted (code, logs, paths)."""
+    text = re.sub(r"```.*?(```|$)", " ", text, flags=re.S)
+    prose = [line for line in text.splitlines()
+             if line.strip() and not line[:1].isspace()
+             and sum(c.isalpha() or c.isspace() for c in line) >= 0.8 * len(line)]
+    return len(" ".join(prose).split())
+
+
+def normal(text):
+    return " ".join(re.findall(r"[a-z0-9']+", text.lower()))[:200]
+
+
+def repeated(s, text):
+    t = normal(text)
+    return len(t.split()) >= REPEAT_WORDS and any(
+        difflib.SequenceMatcher(None, t, old).ratio() >= REPEAT_SIMILAR for old in s["said"])
+
+
+def unread(s, words):
+    """You answered before you could have read Claude's last reply."""
+    if not s["stop_at"] or s["reply_words"] < SKIM_MIN_WORDS or words >= NEW_TASK_WORDS:
+        return False
+    need = min(SKIM_CAP, s["reply_words"] / READ_WPM * 60 * SKIM_SHARE)
+    return time.time() - s["stop_at"] < need
+
+
+def kind(s, text):
+    """What a prompt says about how you're working, and why: 'own', 'decide', 'stuck', 'skim', 'handoff' or 'plain'."""
+    words = len(text.split())
+    if OWN_RE.search(text) or CURIOUS_RE.search(text):
+        return "own", ""
+    if DELEGATE_RE.search(text):
+        return "decide", ""
+    if DOOM_RE.search(text) or ERROR_RE.search(text):
+        return "stuck", ""
+    if len(text.strip().splitlines()) >= PASTE_LINES and own_words(text) < PASTE_OWN_WORDS:
+        return "stuck", "a paste with no words of your own"
+    if repeated(s, text):
+        return "stuck", "the same prompt again"
+    if unread(s, words):
+        return "skim", ""
+    if STAMP_RE.search(text) or GO_RE.search(text):
+        return "handoff", ""
+    if words < NEW_TASK_WORDS:
+        return "handoff", "a short order"
+    return "plain", ""
 
 
 def on_prompt(s, text):
@@ -106,52 +193,108 @@ def on_prompt(s, text):
     words = len(text.split())
     s["session_start"] = s["session_start"] or now
     s["words"] += words
-    if DELEGATE_RE.search(text):
-        add(s, DELEGATE_ROT)
-        log(s, f"You asked Claude to make your call: '{text[:40]}'. Decide first, then ask.")
-    elif CURIOUS_RE.search(text):
-        s["doom_streak"] = 0
-        add(s, -CURIOSITY_HEAL)
-        log(s, f"Curiosity detected 🧠 (+{CURIOSITY_HEAL})")
-    elif DOOM_RE.search(text):
-        streak = minutes_since(s["doom_last"]) <= DOOM_WINDOW
-        s["doom_streak"] = s["doom_streak"] + 1 if streak else 1
-        s["doom_last"] = now
-        log(s, f"Doom prompt detected: '{text[:40]}' (x{s['doom_streak']})")
-        if s["doom_streak"] > DOOM_FREE:
-            add(s, DOOM_ROT)
+    k, why = kind(s, text)
+    quote = " ".join(text.split())[:40]
+    if s["unchecked"]:
+        if k == "own":
+            log(s, "You looked at what Claude did before moving on 👀")
+        else:
+            rot = min(UNCHECKED_CAP, UNCHECKED_BASE + s["unchecked"] / UNCHECKED_PER)
+            add(s, rot)
+            log(s, f"Claude made {s['turn_actions']} moves and wrote {s['unchecked']:,} tokens, and you moved on "
+                   f"without asking what it did (+{rot:.1f} rot)")
+        s["unchecked"] = 0
+    if k == "own":
+        stuck = s["recent"].count("stuck")
+        s["recent"] = []
+        if CURIOUS_RE.search(text):
+            add(s, -CURIOSITY_HEAL)
+            log(s, f"Curiosity detected 🧠 (+{CURIOSITY_HEAL})")
+        else:
+            log(s, "Your own take, then Claude's help. That's the way 👍")
+        if stuck >= STUCK_FREE:
+            add(s, -LOOP_BREAK_HEAL)
+            log(s, f"You broke the loop with an idea of your own (+{LOOP_BREAK_HEAL})")
     else:
-        s["doom_streak"] = 0
-        log(s, f"A {words}-word prompt. Actual sentences! Respect.")
+        s["recent"] = (s["recent"] + [k])[-RECENT:]
+        n = s["recent"].count(k)
+        if k == "decide" and n > 1:
+            add(s, STREAK_ROT)
+            log(s, f"{n} decisions handed to Claude lately, none with your own take. Decide first, then ask.")
+        elif k == "decide":
+            add(s, DECIDE_ROT)
+            log(s, f"You asked Claude to decide: '{quote}'. Next time, say which way you lean.")
+        elif k == "stuck" and n > STUCK_FREE:
+            add(s, STREAK_ROT)
+            log(s, f"Stuck loop: round {n} with no new idea. What's your guess about the bug?")
+        elif k == "stuck":
+            log(s, f"'{quote}' ({n} of {STUCK_FREE} free)" if not why else f"Stuck: {why} ({n} of {STUCK_FREE} free)")
+        elif k == "skim" and n > SKIM_FREE:
+            add(s, STREAK_ROT)
+            log(s, f"Answered {n} replies faster than you could read them. Did you read what Claude did?")
+        elif k == "skim":
+            log(s, f"That was quick for a {s['reply_words']}-word reply ({n} of {SKIM_FREE} free)")
+        elif k == "handoff" and n > HANDOFF_FREE:
+            add(s, HANDOFF_ROT)
+            log(s, f"Hand-off #{n}: '{quote}'. Claude is steering now. Say what you want and why.")
+        elif k == "handoff":
+            log(s, f"'{quote}' ({n} of {HANDOFF_FREE} free)")
+        else:  # a real request in your own words is you steering again, not autopilot
+            s["recent"] = [x for x in s["recent"] if x not in ("stuck", "skim")]
+            log(s, f"A {words}-word prompt. Actual sentences! Respect.")
+    s["said"] = (s["said"] + [normal(text)])[-RECENT:]
+    s["stop_at"] = 0  # one reply, one answer
     s["last_prompt"] = now
     ratio_penalty(s)
     return True
 
 
 def on_tokens(s, n):
-    """Counts Claude's output for the brain-to-bot ratio. Volume alone never rots the pumpkin."""
+    """Counts Claude's output for the brain-to-bot ratio."""
     if n:
         s["tokens"] += n
         log(s, f"Claude wrote {n:,} tokens.")
         ratio_penalty(s)
 
 
-def transcript_tokens(path):
-    """Output tokens in a transcript. A message repeats once per content block, so count each id once."""
-    tokens = {}
+def read_transcript(path):
+    """Output tokens in the whole transcript, and for this turn (since your last prompt): its tokens,
+    the words of text Claude showed you, and its tool calls.
+    A message repeats once per content block, so tokens count each id once."""
+    tokens, turn, reply, actions = {}, set(), 0, 0
     for line in open(path):
         entry = json.loads(line)
-        if entry.get("type") == "assistant":
+        content = entry.get("message", {}).get("content")
+        blocks = content if isinstance(content, list) else []
+        if entry.get("type") == "user":
+            if not any(b.get("type") == "tool_result" for b in blocks):
+                turn, reply, actions = set(), 0, 0  # a prompt you typed, not a tool result
+        elif entry.get("type") == "assistant":
             msg = entry["message"]
             tokens[msg.get("id")] = msg.get("usage", {}).get("output_tokens", 0)
-    return sum(tokens.values())
+            turn.add(msg.get("id"))
+            reply += sum(len(b.get("text", "").split()) for b in blocks if b.get("type") == "text")
+            actions += sum(b.get("type") == "tool_use" for b in blocks)
+    return sum(tokens.values()), sum(tokens[i] for i in turn), reply, actions
+
+
+def on_turn(s, new_tokens, turn_tokens, reply_words, actions):
+    """Claude finished a turn."""
+    s.update(stop_at=time.time(), reply_words=reply_words, turn_actions=actions)
+    on_tokens(s, new_tokens)
+    busy = actions >= BUSY_ACTIONS
+    if busy or turn_tokens >= BIG_TURN:
+        s["unchecked"] = turn_tokens  # rots on your next prompt unless you ask about it
+    if busy and reply_words < min(EXPLAIN_ENOUGH, EXPLAIN_PER_ACTION * actions):
+        add(s, UNEXPLAINED_ROT)
+        log(s, f"Claude made {actions} moves and explained them in {reply_words} words. Ask what it did.")
 
 
 def on_stop(s, session_id, transcript_path):
-    total = transcript_tokens(transcript_path)
+    total, turn_tokens, reply, actions = read_transcript(transcript_path)
     new = total - s["counted"].get(session_id, 0)
     s["counted"] = dict(list({**s["counted"], session_id: total}.items())[-50:])
-    on_tokens(s, max(new, 0))
+    on_turn(s, max(new, 0), turn_tokens, reply, actions)
 
 
 def on_grass(s):
@@ -182,7 +325,8 @@ def view(s):
         "tokens": s["tokens"],
         "words": s["words"],
         "ratio": round(s["tokens"] / max(s["words"], 1)),
-        "doom_streak": s["doom_streak"],
+        "stuck": s["recent"].count("stuck"),
+        "autopilot": s["recent"].count("skim") + s["recent"].count("handoff"),
         "feed": s["feed"][::-1],
     }
 

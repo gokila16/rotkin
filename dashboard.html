@@ -164,7 +164,8 @@ dialog video { width: 100%; border: 2.5px solid var(--ink); border-radius: 8px; 
 .s4 .breathe { animation: wobble 1.4s ease-in-out infinite; } .s5 .breathe { animation: none; }
 .yay { animation: hop .8s; }
 
-.soft { fill: #6b3a12; opacity: 0; }
+.soft { fill: #6b3a12; opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity 1s, transform 1s; }
+.speck .soft { opacity: .22; transform: scale(.5); } .r1 .soft { transform: none; }
 .r1 .soft { opacity: .35; } .r3 .soft { opacity: .55; }
 .mold { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; transition: opacity 1s, transform 1.2s cubic-bezier(.3, 1.6, .5, 1); }
 .r2 .m2, .r3 .m3, .r4 .m4 { opacity: .92; transform: none; }
@@ -309,9 +310,9 @@ dialog video { width: 100%; border: 2.5px solid var(--ink); border-radius: 8px; 
         <div class="meter"><span class="big" id="rot">0</span><span>/ 100 rot-o-meter</span></div>
         <div class="track"><div class="bar" id="bar"></div></div>
         <div class="stats">
-          <div class="stat"><b id="session">0 min</b><span>without a break</span></div>
+          <div class="stat"><b id="autopilot">x0</b><span>on autopilot</span></div>
           <div class="stat"><b id="tokens">0</b><span>Claude output tokens</span></div>
-          <div class="stat"><b id="doom">x0</b><span>doom streak</span></div>
+          <div class="stat"><b id="doom">x0</b><span>stuck loop</span></div>
           <div class="stat"><b id="ratio">1 : 0</b><span>brain : bot</span></div>
         </div>
       </section>
@@ -387,7 +388,7 @@ function ago(t) {
 function render(s) {
   const i = STAGES.indexOf(s.stage);
   const reached = Array.from({ length: i }, (_, k) => "r" + (k + 1)).join(" ");
-  $("#pumpkin").setAttribute("class", `pumpkin s${i} ${reached}`);
+  $("#pumpkin").setAttribute("class", `pumpkin s${i} ${reached}${s.rot >= 5 ? " speck" : ""}`);
   document.body.classList.toggle("is-dead", i === 5);
   if (i !== stage) {
     stage = i;
@@ -400,10 +401,9 @@ function render(s) {
   }
   $("#rot").textContent = Math.round(s.rot);
   $("#bar").style.width = 100 - s.rot + "%";
-  const m = s.session_minutes;
-  $("#session").textContent = m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`;
+  $("#autopilot").textContent = (s.autopilot > 2 ? "🔥 x" : "x") + (s.autopilot ?? 0);
   $("#tokens").textContent = s.tokens.toLocaleString();
-  $("#doom").textContent = (s.doom_streak > 2 ? "🔥 x" : "x") + s.doom_streak;
+  $("#doom").textContent = (s.stuck > 2 ? "🔥 x" : "x") + (s.stuck ?? 0);
   $("#ratio").textContent = "1 : " + s.ratio.toLocaleString();
   $("#feed").replaceChildren(...s.feed.map(e => {
     const li = document.createElement("li");

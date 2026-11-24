@@ -193,7 +193,8 @@ svg { flex: 0 1 auto; min-height: 0; width: 100%; height: auto; }
 .s5 .body { transform: scale(1.28, .42); }
 .stem { transform-origin: 205px 150px; }
 .s4 .stem { transform: rotate(-20deg); } .s5 .stem { transform: rotate(-70deg) translateY(10px); }
-.soft { fill: #6b3a12; opacity: 0; } .r1 .soft { opacity: .35; } .r3 .soft { opacity: .55; }
+.soft { fill: #6b3a12; opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity 1s, transform 1s; }
+.speck .soft { opacity: .22; transform: scale(.5); } .r1 .soft { opacity: .35; transform: none; } .r3 .soft { opacity: .55; }
 .mold, .puddle, .flies, .stink, .extra, .ghost, .happy, .tired, .dead, .smile, .meh, .sad, .sweat { opacity: 0; }
 .r2 .m2, .r3 .m3, .r4 .m4 { opacity: .92; }
 .puddle { fill: var(--skin-d); stroke: var(--line); stroke-width: 2.5; }
@@ -269,7 +270,7 @@ const STAGES = ["Fresh", "Soft Spot", "Moldy", "Fruit Flies", "Collapsing", "Dea
 window.addEventListener("message", ({ data }) => {
   if (!data) return (document.body.className = "offline");
   const i = STAGES.indexOf(data.stage);
-  document.body.className = "s" + i + " " + STAGES.slice(1, i + 1).map((_, k) => "r" + (k + 1)).join(" ");
+  document.body.className = "s" + i + " " + STAGES.slice(1, i + 1).map((_, k) => "r" + (k + 1)).join(" ") + (data.rot >= 5 ? " speck" : "");
   document.getElementById("stage").textContent = data.stage + " · " + Math.round(data.rot) + "%";
   document.getElementById("bar").style.width = data.rot + "%";
 });
