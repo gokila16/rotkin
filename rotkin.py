@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ROTkin: a pumpkin that rots if you brainrot, and heals when you think for yourself."""
-import difflib
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -55,7 +55,8 @@ HANDOFF_ROT = 2
 PASTE_LINES = 3       # a prompt this many lines long...
 PASTE_OWN_WORDS = 5   # ...with fewer of your own words than this is a bare paste
 REPEAT_WORDS = 4      # prompts at least this long can count as repeats
-REPEAT_SIMILAR = 0.95  # this similar to a recent prompt counts as sending it again
+REPEAT_SIMILAR = 0.8  # this much word overlap with a recent prompt counts as sending it again
+QUOTE_WORDS = 12      # the feed quotes only short one-line prompts, never pastes or long ones
 # Big turns: Claude did a lot, so look at it
 BUSY_ACTIONS = 5      # tool calls in one turn that make it a busy turn
 BIG_TURN = 4000       # or output tokens in one turn
@@ -145,14 +146,24 @@ def own_words(text):
     return len(" ".join(prose).split())
 
 
-def normal(text):
-    return " ".join(re.findall(r"[a-z0-9']+", text.lower()))[:200]
+def fingerprint(text):
+    """Short hashes of a prompt's words and word pairs. Enough to spot a repeat, but the prompt
+    can't be read back from it, so nothing you typed (or pasted, like a key) is kept on disk."""
+    words = re.findall(r"[a-z0-9']+", text.lower())
+    grams = words + [a + " " + b for a, b in zip(words, words[1:])]
+    return sorted({int.from_bytes(hashlib.blake2b(g.encode(), digest_size=4).digest(), "big") for g in grams})
 
 
 def repeated(s, text):
-    t = normal(text)
-    return len(t.split()) >= REPEAT_WORDS and any(
-        difflib.SequenceMatcher(None, t, old).ratio() >= REPEAT_SIMILAR for old in s["said"])
+    if len(text.split()) < REPEAT_WORDS:
+        return False
+    new = set(fingerprint(text))
+    return any(len(new & set(old)) / len(new | set(old)) >= REPEAT_SIMILAR for old in s["said"])
+
+
+def quotable(text):
+    """A short one-line prompt, safe to show in the feed. Longer ones may hold pasted secrets."""
+    return len(text.split()) <= QUOTE_WORDS and "\n" not in text.strip() and not ERROR_RE.search(text)
 
 
 def unread(s, words):
@@ -170,8 +181,10 @@ def kind(s, text):
         return "own", ""
     if DELEGATE_RE.search(text):
         return "decide", ""
-    if DOOM_RE.search(text) or ERROR_RE.search(text):
+    if DOOM_RE.search(text):
         return "stuck", ""
+    if ERROR_RE.search(text):
+        return "stuck", "a pasted error"
     if len(text.strip().splitlines()) >= PASTE_LINES and own_words(text) < PASTE_OWN_WORDS:
         return "stuck", "a paste with no words of your own"
     if repeated(s, text):
@@ -194,7 +207,7 @@ def on_prompt(s, text):
     s["session_start"] = s["session_start"] or now
     s["words"] += words
     k, why = kind(s, text)
-    quote = " ".join(text.split())[:40]
+    quote = f"'{' '.join(text.split())[:40]}'" if quotable(text) else f"your {words}-word prompt"
     if s["unchecked"]:
         if k == "own":
             log(s, "You looked at what Claude did before moving on 👀")
@@ -223,12 +236,12 @@ def on_prompt(s, text):
             log(s, f"{n} decisions handed to Claude lately, none with your own take. Decide first, then ask.")
         elif k == "decide":
             add(s, DECIDE_ROT)
-            log(s, f"You asked Claude to decide: '{quote}'. Next time, say which way you lean.")
+            log(s, f"You asked Claude to decide: {quote}. Next time, say which way you lean.")
         elif k == "stuck" and n > STUCK_FREE:
             add(s, STREAK_ROT)
             log(s, f"Stuck loop: round {n} with no new idea. What's your guess about the bug?")
         elif k == "stuck":
-            log(s, f"'{quote}' ({n} of {STUCK_FREE} free)" if not why else f"Stuck: {why} ({n} of {STUCK_FREE} free)")
+            log(s, f"{quote} ({n} of {STUCK_FREE} free)" if not why else f"Stuck: {why} ({n} of {STUCK_FREE} free)")
         elif k == "skim" and n > SKIM_FREE:
             add(s, STREAK_ROT)
             log(s, f"Answered {n} replies faster than you could read them. Did you read what Claude did?")
@@ -236,13 +249,13 @@ def on_prompt(s, text):
             log(s, f"That was quick for a {s['reply_words']}-word reply ({n} of {SKIM_FREE} free)")
         elif k == "handoff" and n > HANDOFF_FREE:
             add(s, HANDOFF_ROT)
-            log(s, f"Hand-off #{n}: '{quote}'. Claude is steering now. Say what you want and why.")
+            log(s, f"Hand-off #{n}: {quote}. Claude is steering now. Say what you want and why.")
         elif k == "handoff":
-            log(s, f"'{quote}' ({n} of {HANDOFF_FREE} free)")
+            log(s, f"{quote} ({n} of {HANDOFF_FREE} free)")
         else:  # a real request in your own words is you steering again, not autopilot
             s["recent"] = [x for x in s["recent"] if x not in ("stuck", "skim")]
             log(s, f"A {words}-word prompt. Actual sentences! Respect.")
-    s["said"] = (s["said"] + [normal(text)])[-RECENT:]
+    s["said"] = (s["said"] + [fingerprint(text)])[-RECENT:]
     s["stop_at"] = 0  # one reply, one answer
     s["last_prompt"] = now
     ratio_penalty(s)
@@ -339,6 +352,7 @@ def apply(event, *args):
     with open(HOME / "lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         s = {**fresh(), **json.loads(STATE.read_text())} if STATE.exists() else fresh()
+        s["said"] = [x for x in s["said"] if isinstance(x, list)]  # drop prompt text older versions kept
         tick(s)
         result = event(s, *args)
         STATE.write_text(json.dumps(s))

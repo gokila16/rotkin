@@ -7,6 +7,7 @@ from pathlib import Path
 import rotkin
 
 PAGE = Path(__file__).with_name("dashboard.html")
+FONTS = {f"/fonts/{f.name}": f for f in Path(__file__).with_name("fonts").glob("*.woff2")}
 # Only answer requests sent to this address (blocks DNS rebinding),
 # and only take button presses from the dashboard page itself (blocks other websites).
 HOSTS = {"localhost:8765", "127.0.0.1:8765"}
@@ -29,6 +30,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(PAGE.read_bytes(), "text/html; charset=utf-8")
         elif self.path == "/state":
             self.reply(rotkin.apply(rotkin.view))
+        elif self.path in FONTS:
+            self.reply(FONTS[self.path].read_bytes(), "font/woff2")
         else:
             self.send_error(404)
 

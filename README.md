@@ -10,7 +10,7 @@ We all know the loop. Claude writes 400 lines, something breaks, you type "fix i
 
 ROTkin keeps score. It never rots because you use AI, or because you've been at it a long time, only because of how: every stuck "fix it" loop, every decision you hand to Claude, every "do that" and every pile of changes you wave through without asking what Claude did makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
 
-Python standard library only. No accounts, nothing leaves your machine.
+Python standard library only. No accounts, nothing leaves your machine, and it never saves what you type: repeats are spotted from short hashes, and the feed quotes only short one-line prompts.
 
 ## Install
 

@@ -4,8 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ROTkin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
+<style>
+/* Bundled in fonts/ so the dashboard makes no outside requests */
+@font-face { font-family: Gaegu; font-weight: 400; font-display: swap; src: url(/fonts/gaegu-400.woff2) format("woff2"); }
+@font-face { font-family: Gaegu; font-weight: 700; font-display: swap; src: url(/fonts/gaegu-700.woff2) format("woff2"); }
+@font-face { font-family: "Patrick Hand"; font-display: swap; src: url(/fonts/patrick-hand.woff2) format("woff2"); }
+@font-face { font-family: "Rubik Wet Paint"; font-display: swap; src: url(/fonts/rubik-wet-paint.woff2) format("woff2"); }
+</style>
 <style>
 :root {
   --bg: #f2b544; --bg-dot: #e3a033; --paper: #fffaef; --paper-2: #f6ecd6; --ink: #2b1d14; --muted: #6f5a47;

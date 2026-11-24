@@ -19,7 +19,7 @@ Every "fix it", every decision you hand to Claude, every "do that" and every pil
 2. Find **ROTkin** in the Explorer sidebar. The status bar shows its rot level.
 3. Click the status bar item for the full dashboard, with **🌱 Touch Grass** (webcam check for real grass) and **🧠 Think Mode**.
 
-The extension starts the dashboard server at http://localhost:8765 by itself. Nothing leaves your machine. State lives in `~/.rotkin/`.
+The extension starts the dashboard server at http://localhost:8765 by itself. Nothing leaves your machine, and ROTkin never saves what you type. State lives in `~/.rotkin/`.
 
 ## Commands
 

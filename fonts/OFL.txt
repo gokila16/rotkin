@@ -1,0 +1,7 @@
+These fonts are licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org).
+
+- Gaegu by JIKJI SOFT (gaegu-400.woff2, gaegu-700.woff2): https://fonts.google.com/specimen/Gaegu
+- Patrick Hand by Patrick Wagesreiter (patrick-hand.woff2): https://fonts.google.com/specimen/Patrick+Hand
+- Rubik Wet Paint by The Rubik Filtered Project Authors (rubik-wet-paint.woff2): https://fonts.google.com/specimen/Rubik+Wet+Paint
+
+Latin subsets, downloaded unmodified from Google Fonts and bundled so the dashboard makes no outside requests.
