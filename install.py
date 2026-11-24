@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Adds Rotkin's hooks to ~/.claude/settings.json, keeping everything already there.
+"""Adds ROTkin's hooks to ~/.claude/settings.json, keeping everything already there.
 
 Usage: python3 install.py [path/to/rotkin.py]
 The path defaults to the rotkin.py next to this file. Running it again replaces
-Rotkin's old entries, so it also moves the hooks to a new path.
+ROTkin's old entries, so it also moves the hooks to a new path.
 """
 import json
 import shutil
@@ -43,4 +43,4 @@ if "statusLine" not in settings or is_rotkin(settings["statusLine"]):
 
 SETTINGS.parent.mkdir(exist_ok=True)
 SETTINGS.write_text(json.dumps(settings, indent=2) + "\n")
-print("🎃 Rotkin installed. Run `python3 server.py` and open http://localhost:8765")
+print("🎃 ROTkin installed. Run `python3 server.py` and open http://localhost:8765")

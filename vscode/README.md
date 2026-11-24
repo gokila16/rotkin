@@ -1,8 +1,10 @@
-# 🎃 Rotkin
+# 🎃 ROTkin
 
-**A pumpkin in your sidebar that rots while you vibecode with Claude Code, and heals when you take breaks and think for yourself.**
+**A pumpkin that rots if you brainrot.**
 
-Every "fix it", every decision you hand to Claude, every "do that" and every pile of changes you never ask about makes Rotkin a little moldier. Using AI never rots it by itself; using it on autopilot does. Let it die and Claude Code stops taking your prompts until you touch actual grass.
+It sits in your sidebar, watches how you vibecode with Claude Code, and heals when you take breaks and think for yourself.
+
+Every "fix it", every decision you hand to Claude, every "do that" and every pile of changes you never ask about makes ROTkin a little moldier. Using AI never rots it by itself; using it on autopilot does. Let it die and Claude Code stops taking your prompts until you touch actual grass.
 
 ## Requirements
 
@@ -12,18 +14,18 @@ Every "fix it", every decision you hand to Claude, every "do that" and every pil
 
 ## Getting started
 
-1. Install the extension. Rotkin asks to connect to Claude Code. Click **Connect**.
+1. Install the extension. ROTkin asks to connect to Claude Code. Click **Connect**.
    This adds two hooks and a status line to `~/.claude/settings.json`, after backing it up. Your other settings stay as they are.
-2. Find **Rotkin** in the Explorer sidebar. The status bar shows its rot level.
+2. Find **ROTkin** in the Explorer sidebar. The status bar shows its rot level.
 3. Click the status bar item for the full dashboard, with **🌱 Touch Grass** (webcam check for real grass) and **🧠 Think Mode**.
 
 The extension starts the dashboard server at http://localhost:8765 by itself. Nothing leaves your machine. State lives in `~/.rotkin/`.
 
 ## Commands
 
-- **Rotkin: Open Dashboard**
-- **Rotkin: Connect to Claude Code**
-- **Rotkin: Disconnect from Claude Code** removes only Rotkin's entries. Do this before uninstalling the extension.
+- **ROTkin: Open Dashboard**
+- **ROTkin: Connect to Claude Code**
+- **ROTkin: Disconnect from Claude Code** removes only ROTkin's entries. Do this before uninstalling the extension.
 
 ## What rots it
 

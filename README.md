@@ -1,12 +1,14 @@
-# 🎃 Rotkin
+# 🎃 ROTkin
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/gokila16.rotkin?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=gokila16.rotkin)
 
-**A pumpkin that rots while you vibecode with Claude Code, and heals when you take breaks and think for yourself.**
+**A pumpkin that rots if you brainrot.**
+
+It watches how you vibecode with Claude Code, and heals when you take breaks and think for yourself.
 
 We all know the loop. Claude writes 400 lines, something breaks, you type "fix it". Then "still broken". Then "pls". Two hours later you haven't stood up, and you couldn't explain what your own code does.
 
-Rotkin keeps score. It never rots because you use AI, or because you've been at it a long time, only because of how: every stuck "fix it" loop, every decision you hand to Claude, every "do that" and every pile of changes you wave through without asking what Claude did makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
+ROTkin keeps score. It never rots because you use AI, or because you've been at it a long time, only because of how: every stuck "fix it" loop, every decision you hand to Claude, every "do that" and every pile of changes you wave through without asking what Claude did makes it a little moldier. Let it die and Claude Code stops taking your prompts until you go outside and touch actual grass.
 
 Python standard library only. No accounts, nothing leaves your machine.
 
@@ -18,9 +20,9 @@ python3 install.py    # adds two hooks and a status line to ~/.claude/settings.j
 python3 server.py     # then open http://localhost:8765
 ```
 
-`python3 uninstall.py` removes only Rotkin's entries.
+`python3 uninstall.py` removes only ROTkin's entries.
 
-Prefer VS Code? [Install Rotkin from the Marketplace](https://marketplace.visualstudio.com/items?itemName=gokila16.rotkin) (or run `code --install-extension gokila16.rotkin`). It puts the pumpkin in your sidebar and starts the server for you.
+Prefer VS Code? [Install ROTkin from the Marketplace](https://marketplace.visualstudio.com/items?itemName=gokila16.rotkin) (or run `code --install-extension gokila16.rotkin`). It puts the pumpkin in your sidebar and starts the server for you.
 
 ## How it rots
 
@@ -32,7 +34,7 @@ Prefer VS Code? [Install Rotkin from the Marketplace](https://marketplace.visual
 - **Handing over your decisions:** "should I…", "you decide", "which one should we…" with no lean of your own. +1, and +3 for each more within your last 6 prompts.
 - **Brain-to-bot ratio:** a little rot whenever Claude writes over 1,000 tokens per word you wrote
 
-Rotkin reads the stretch of the thread, not single messages. Add your own take ("I'm leaning sqlite because…", "maybe it's the cookie domain") or ask about Claude's work and every streak clears: no rot, and breaking a stuck loop heals 3. A new real request also clears stuck and skimming streaks, but not hand-offs. Time alone never rots or heals it: a long focused session is fine, and sitting idle doesn't undo anything. An occasional "yes" is fine. Over two hours with no breaks, someone who writes real requests and asks why now and then stays Fresh, someone who never looks at what Claude did turns Moldy, and a full autopilot session ("do that", "fix it", pasted errors, answered within seconds) kills it in about 70 minutes.
+ROTkin reads the stretch of the thread, not single messages. Add your own take ("I'm leaning sqlite because…", "maybe it's the cookie domain") or ask about Claude's work and every streak clears: no rot, and breaking a stuck loop heals 3. A new real request also clears stuck and skimming streaks, but not hand-offs. Time alone never rots or heals it: a long focused session is fine, and sitting idle doesn't undo anything. An occasional "yes" is fine. Over two hours with no breaks, someone who writes real requests and asks why now and then stays Fresh, someone who never looks at what Claude did turns Moldy, and a full autopilot session ("do that", "fix it", pasted errors, answered within seconds) kills it in about 70 minutes.
 
 ## How it heals
 
@@ -62,10 +64,10 @@ python3 rotkin.py reset     # a fresh pumpkin
 python3 rotkin.py status
 ```
 
-If anything goes wrong inside Rotkin, the hook quietly does nothing. It never breaks Claude Code.
+If anything goes wrong inside ROTkin, the hook quietly does nothing. It never breaks Claude Code.
 
 `python3 simulate.py 3` plays a whole life cycle, death and comeback included, without spending a token. Handy for demo videos.
 
-Rotkin isn't anti-AI. It was vibecoded with Claude Code. It just thinks you should blink sometimes.
+ROTkin isn't anti-AI. It was vibecoded with Claude Code. It just thinks you should blink sometimes.
 
 MIT licensed.

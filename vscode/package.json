@@ -1,7 +1,7 @@
 {
   "name": "rotkin",
-  "displayName": "Rotkin",
-  "description": "A pumpkin in your sidebar that rots while you vibecode.",
+  "displayName": "ROTkin",
+  "description": "A pumpkin that rots if you brainrot. Watches how you vibecode with Claude Code.",
   "version": "0.2.0",
   "publisher": "gokila16",
   "license": "MIT",
@@ -18,12 +18,12 @@
   },
   "contributes": {
     "views": {
-      "explorer": [{ "type": "webview", "id": "rotkin.pumpkin", "name": "Rotkin" }]
+      "explorer": [{ "type": "webview", "id": "rotkin.pumpkin", "name": "ROTkin" }]
     },
     "commands": [
-      { "command": "rotkin.openDashboard", "title": "Rotkin: Open Dashboard" },
-      { "command": "rotkin.connect", "title": "Rotkin: Connect to Claude Code" },
-      { "command": "rotkin.disconnect", "title": "Rotkin: Disconnect from Claude Code" }
+      { "command": "rotkin.openDashboard", "title": "ROTkin: Open Dashboard" },
+      { "command": "rotkin.connect", "title": "ROTkin: Connect to Claude Code" },
+      { "command": "rotkin.disconnect", "title": "ROTkin: Disconnect from Claude Code" }
     ]
   }
 }

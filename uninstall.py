@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Removes only Rotkin's hooks from ~/.claude/settings.json."""
+"""Removes only ROTkin's hooks from ~/.claude/settings.json."""
 import json
 import shutil
 import time
@@ -23,4 +23,4 @@ if "rotkin.py" in settings.get("statusLine", {}).get("command", ""):
     del settings["statusLine"]
 
 SETTINGS.write_text(json.dumps(settings, indent=2) + "\n")
-print("Rotkin uninstalled. Your other hooks are untouched. RIP 🎃")
+print("ROTkin uninstalled. Your other hooks are untouched. RIP 🎃")

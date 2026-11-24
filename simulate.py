@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plays a fake vibecoding session so you can film Rotkin die and come back.
+"""Plays a fake vibecoding session so you can film ROTkin die and come back.
 
 usage: python3 simulate.py [seconds between steps, default 1.5]
 """

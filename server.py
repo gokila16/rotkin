@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rotkin dashboard. Run `python3 server.py` and open http://localhost:8765"""
+"""ROTkin dashboard. Run `python3 server.py` and open http://localhost:8765"""
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -53,5 +53,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print("🎃 Rotkin is watching at http://localhost:8765")
+    print("🎃 ROTkin is watching at http://localhost:8765")
     ThreadingHTTPServer(("127.0.0.1", 8765), Handler).serve_forever()

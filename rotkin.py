@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rotkin: a pumpkin that rots while you vibecode and heals when you think for yourself."""
+"""ROTkin: a pumpkin that rots if you brainrot, and heals when you think for yourself."""
 import difflib
 import fcntl
 import json
@@ -79,7 +79,7 @@ WORSE = {
     "Moldy": "Mold detected. When did you last blink?",
     "Fruit Flies": "Fruit flies have moved in. They brought friends.",
     "Collapsing": "Structural integrity: questionable.",
-    "Dead": "💀 Rotkin has died. Prompts are now blocked.",
+    "Dead": "💀 ROTkin has died. Prompts are now blocked.",
 }
 SPECK = 5             # rot where the first bruise shows on the pumpkin
 EMOJI = {"Fresh": "🎃", "Soft Spot": "🎃", "Moldy": "🍄", "Fruit Flies": "🪰", "Collapsing": "😵", "Dead": "💀"}
@@ -374,10 +374,10 @@ def main(args):
     elif cmd == "disable":
         HOME.mkdir(exist_ok=True)
         DISABLED.touch()
-        print("Rotkin disabled. Hooks will do nothing.")
+        print("ROTkin disabled. Hooks will do nothing.")
     elif cmd == "enable":
         DISABLED.unlink(missing_ok=True)
-        print("Rotkin enabled.")
+        print("ROTkin enabled.")
     elif cmd == "reset":
         apply(reset)
         print("Fresh pumpkin!")

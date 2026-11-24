@@ -49,7 +49,7 @@ function hooksInstalled() {
 function activate(context) {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   status.command = "rotkin.openDashboard";
-  status.tooltip = "Open the Rotkin dashboard";
+  status.tooltip = "Open the ROTkin dashboard";
   status.show();
   context.subscriptions.push(status);
 
@@ -70,7 +70,7 @@ function activate(context) {
     const py = await python;
     if (!py && !warnedNoPython) {
       warnedNoPython = true;
-      const pick = await vscode.window.showErrorMessage("Rotkin needs Python 3.8 or newer.", "Get Python");
+      const pick = await vscode.window.showErrorMessage("ROTkin needs Python 3.8 or newer.", "Get Python");
       if (pick) vscode.env.openExternal(vscode.Uri.parse("https://www.python.org/downloads/"));
     }
     return py;
@@ -98,21 +98,21 @@ function activate(context) {
     try {
       refreshHookScript();
       await run(py, [path.join(app, "install.py"), HOOK_SCRIPT]);
-      vscode.window.showInformationMessage("🎃 Rotkin is connected. New Claude Code sessions will feed your pumpkin.");
+      vscode.window.showInformationMessage("🎃 ROTkin is connected. New Claude Code sessions will feed your pumpkin.");
     } catch (err) {
-      vscode.window.showErrorMessage(`Rotkin couldn't connect: ${err.message}`);
+      vscode.window.showErrorMessage(`ROTkin couldn't connect: ${err.message}`);
     }
   }
 
   async function disconnect() {
-    if (!hooksInstalled()) return vscode.window.showInformationMessage("Rotkin isn't connected to Claude Code.");
+    if (!hooksInstalled()) return vscode.window.showInformationMessage("ROTkin isn't connected to Claude Code.");
     const py = await needPython();
     if (!py) return;
     try {
       await run(py, [path.join(app, "uninstall.py")]);
-      vscode.window.showInformationMessage("Rotkin is disconnected. Your other hooks are untouched.");
+      vscode.window.showInformationMessage("ROTkin is disconnected. Your other hooks are untouched.");
     } catch (err) {
-      vscode.window.showErrorMessage(`Rotkin couldn't disconnect: ${err.message}`);
+      vscode.window.showErrorMessage(`ROTkin couldn't disconnect: ${err.message}`);
     }
   }
 
@@ -120,7 +120,7 @@ function activate(context) {
     if (hooksInstalled() || context.globalState.get("askedToConnect")) return;
     context.globalState.update("askedToConnect", true);
     const pick = await vscode.window.showInformationMessage(
-      "Connect Rotkin to Claude Code? It adds two hooks and a status line to ~/.claude/settings.json (backed up first).",
+      "Connect ROTkin to Claude Code? It adds two hooks and a status line to ~/.claude/settings.json (backed up first).",
       "Connect",
       "Not now",
     );
@@ -218,7 +218,7 @@ button { width: 100%; margin-top: 8px; padding: 6px; border: 0; border-radius: 2
 @media (max-height: 130px) { button { display: none; } }
 </style></head>
 <body class="offline">
-<p class="msg">Waking up the pumpkin…<br>(Rotkin needs Python 3)</p>
+<p class="msg">Waking up the pumpkin…<br>(ROTkin needs Python 3)</p>
 <div class="ui">
 <svg viewBox="20 85 360 290">
   <defs>
